@@ -1,0 +1,565 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Gestion Magasin Quincaillerie</title>
+  <style>
+    /* Image arrière-plan avec animation zoom */
+    body {
+      margin: 0; padding: 0;
+      font-family: Arial, sans-serif;
+      position: relative;
+      min-height: 100vh;
+      overflow-x: hidden;
+      background: #f4f4f4;
+    }
+    body::before {
+      content: "";
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background-image: url('https://images.unsplash.com/photo-1554224154-22dec7ec8818?auto=format&fit=crop&w=1470&q=80');
+      background-size: cover;
+      background-position: center;
+      filter: brightness(0.45) grayscale(0.3);
+      animation: zoom 30s linear infinite;
+      z-index: -1;
+      will-change: transform;
+    }
+
+    @keyframes zoom {
+      0% { transform: scale(1) translate(0,0); }
+      50% { transform: scale(1.1) translate(10px,10px); }
+      100% { transform: scale(1) translate(0,0); }
+    }
+
+    nav {
+      background: rgba(76, 175, 80, 0.85);
+      padding: 10px;
+      display: flex;
+      gap: 10px;
+      position: sticky;
+      top: 0;
+      z-index: 10;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+      border-radius: 0 0 10px 10px;
+    }
+    nav button {
+      background: #66bb6a;
+      border: none;
+      padding: 10px 20px;
+      color: #fff;
+      cursor: pointer;
+      font-weight: bold;
+      border-radius: 4px;
+      transition: background-color 0.3s ease, transform 0.2s ease;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.15);
+      user-select: none;
+    }
+    nav button:hover, nav button.active {
+      background: #388e3c;
+      transform: scale(1.1);
+      box-shadow: 0 4px 12px rgba(0,0,0,0.25);
+    }
+
+    main {
+      background: rgba(255,255,255,0.92);
+      margin: 20px auto;
+      padding: 20px 25px;
+      border-radius: 10px;
+      max-width: 1200px;
+      box-shadow: 0 0 15px rgba(0,0,0,0.3);
+      min-height: 80vh;
+    }
+
+    h1, h2 {
+      color: #2e2e2e;
+      text-shadow: 0 1px 2px rgba(255 255 255 / 0.7);
+      margin-top: 0;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-bottom: 20px;
+      box-shadow: 0 3px 10px rgba(0,0,0,0.1);
+      background: white;
+    }
+    th, td {
+      border: 1px solid #ddd;
+      padding: 8px;
+      text-align: center;
+      transition: background-color 0.3s ease;
+    }
+    th {
+      background-color: #4caf50;
+      color: white;
+      user-select: none;
+    }
+    tr:hover td {
+      background-color: #f1f9f1;
+    }
+
+    input, select, button {
+      padding: 8px;
+      margin: 5px 5px 15px 0;
+      border-radius: 4px;
+      border: 1px solid #ccc;
+      transition: box-shadow 0.3s ease;
+      font-size: 1em;
+    }
+    input:focus, select:focus {
+      outline: none;
+      box-shadow: 0 0 8px #4caf50;
+      border-color: #4caf50;
+    }
+    button {
+      cursor: pointer;
+      background: #4caf50;
+      color: white;
+      border: none;
+      font-weight: bold;
+      box-shadow: 0 3px 8px rgba(76,175,80,0.6);
+      transition: background-color 0.3s ease, transform 0.2s ease;
+    }
+    button:hover {
+      background: #388e3c;
+      transform: scale(1.05);
+      box-shadow: 0 6px 14px rgba(56,142,60,0.7);
+    }
+
+    #formulaire div {
+      margin-bottom: 10px;
+    }
+
+    /* Sections - cacher toutes sauf active */
+    section {
+      display: none;
+      animation: fadeIn 0.8s ease forwards;
+    }
+    section.active {
+      display: block;
+    }
+
+    @keyframes fadeIn {
+      from {opacity: 0;}
+      to {opacity: 1;}
+    }
+
+    /* Alerte stock faible */
+    .stock-faible {
+      background-color: #ffcccc !important;
+      color: #a00 !important;
+      font-weight: bold;
+    }
+
+  </style>
+</head>
+<body>
+
+<nav>
+  <button class="active" data-page="accueil">Accueil</button>
+  <button data-page="historique">Historique</button>
+  <button data-page="stock">Stock</button>
+  <button data-page="statistiques">Statistiques</button>
+  <button data-page="calendrier">Calendrier</button>
+</nav>
+
+<main>
+  <section id="accueil" class="active">
+    <h1>Gestion Magasin de Quincaillerie</h1>
+    <form id="formulaire">
+      <div>
+        <input type="text" id="client" placeholder="Nom du Client" required />
+        <input type="text" id="telephone" placeholder="Téléphone du Client" required />
+        <input type="text" id="adresse" placeholder="Adresse du Client" required />
+      </div>
+      <div>
+        <input type="text" id="nom" placeholder="Nom du Produit" required />
+        <input type="number" id="quantite" placeholder="Quantité" required min="1" />
+        <input type="number" id="prix" placeholder="Prix Unitaire (CFA)" required min="0" step="0.01" />
+        <select id="type" required>
+          <option value="achat">Achat</option>
+          <option value="vente">Vente</option>
+        </select>
+      </div>
+      <button type="submit">Ajouter</button>
+    </form>
+  </section>
+
+  <section id="historique">
+    <h2>Recherche par client</h2>
+    <input type="text" id="rechercheClient" placeholder="Tapez le nom du client pour filtrer..." style="width:100%; padding:8px; margin-bottom:20px;" />
+    <table id="tableau">
+      <thead>
+        <tr>
+          <th>Date</th>
+          <th>Client</th>
+          <th>Téléphone</th>
+          <th>Adresse</th>
+          <th>Produit</th>
+          <th>Quantité</th>
+          <th>Prix Unitaire (CFA)</th>
+          <th>Type</th>
+          <th>Total (CFA)</th>
+          <th>Action</th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+    <button id="imprimerHistoriqueBtn">🖨️ Imprimer Historique complet</button>
+    <button id="exportCsvBtn">⬇️ Export CSV Historique</button>
+  </section>
+
+  <section id="stock">
+    <h2>Stock des produits</h2>
+    <table id="stockTable">
+      <thead>
+        <tr>
+          <th>Produit</th>
+          <th>Total Achats</th>
+          <th>Total Ventes</th>
+          <th>Stock Actuel</th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+  </section>
+
+  <section id="statistiques">
+    <h2>Statistiques</h2>
+    <table>
+      <thead>
+        <tr>
+          <th>Période</th>
+          <th>Total Achats (CFA)</th>
+          <th>Total Ventes (CFA)</th>
+          <th>Bénéfice (CFA)</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Aujourd'hui</td>
+          <td id="achatJour">0</td>
+          <td id="venteJour">0</td>
+          <td id="benefJour">0</td>
+        </tr>
+        <tr>
+          <td>Ce Mois</td>
+          <td id="achatMois">0</td>
+          <td id="venteMois">0</td>
+          <td id="benefMois">0</td>
+        </tr>
+        <tr>
+          <td>Cette Année</td>
+          <td id="achatAn">0</td>
+          <td id="venteAn">0</td>
+          <td id="benefAn">0</td>
+        </tr>
+      </tbody>
+    </table>
+  </section>
+
+  <section id="calendrier">
+    <h2>Calendrier des échéances crédit impayé</h2>
+    <div id="calendrierDiv"></div>
+  </section>
+</main>
+
+<script>
+  // Navigation pages
+  const navButtons = document.querySelectorAll('nav button');
+  const sections = document.querySelectorAll('main section');
+  navButtons.forEach(btn => {
+    btn.addEventListener('click', () => {
+      navButtons.forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      const page = btn.dataset.page;
+      sections.forEach(s => s.classList.toggle('active', s.id === page));
+    });
+  });
+
+  // Formulaire ajout transaction
+  const form = document.getElementById('formulaire');
+  const tableau = document.querySelector('#tableau tbody');
+  const stockTable = document.querySelector('#stockTable tbody');
+  const rechercheClient = document.getElementById('rechercheClient');
+  const calendrierDiv = document.getElementById('calendrierDiv');
+  const imprimerHistoriqueBtn = document.getElementById('imprimerHistoriqueBtn');
+  const exportCsvBtn = document.getElementById('exportCsvBtn');
+
+  form.addEventListener('submit', e => {
+    e.preventDefault();
+
+    const client = document.getElementById('client').value.trim();
+    const telephone = document.getElementById('telephone').value.trim();
+    const adresse = document.getElementById('adresse').value.trim();
+    const nom = document.getElementById('nom').value.trim();
+    const quantite = parseInt(document.getElementById('quantite').value);
+    const prix = parseFloat(document.getElementById('prix').value);
+    const type = document.getElementById('type').value;
+    const date = new Date().toISOString();
+
+    if (!client || !telephone || !adresse || !nom || quantite <= 0 || prix < 0) {
+      alert("Veuillez remplir correctement tous les champs.");
+      return;
+    }
+
+    const produits = JSON.parse(localStorage.getItem('produits') || '[]');
+    produits.push({ client, telephone, adresse, nom, quantite, prix, type, date });
+    localStorage.setItem('produits', JSON.stringify(produits));
+
+    afficherProduits();
+    afficherStock();
+    afficherStats();
+    afficherCalendrier();
+
+    form.reset();
+  });
+
+  function afficherProduits(filtreClient = '') {
+    const produits = JSON.parse(localStorage.getItem('produits') || '[]');
+    tableau.innerHTML = '';
+    const filtre = filtreClient.toLowerCase();
+
+    produits.forEach((p, index) => {
+      if (!filtre || p.client.toLowerCase().includes(filtre)) {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td>${new Date(p.date).toLocaleString()}</td>
+          <td>${p.client}</td>
+          <td>${p.telephone}</td>
+          <td>${p.adresse}</td>
+          <td>${p.nom}</td>
+          <td>${p.quantite}</td>
+          <td>${p.prix.toFixed(2)}</td>
+          <td>${p.type}</td>
+          <td>${(p.quantite * p.prix).toFixed(2)}</td>
+          <td><button onclick="imprimerRecu(${index})">🖨️ Imprimer</button></td>
+        `;
+        tableau.appendChild(tr);
+      }
+    });
+  }
+
+  rechercheClient.addEventListener('input', () => {
+    afficherProduits(rechercheClient.value);
+  });
+
+  function afficherStock() {
+    const produits = JSON.parse(localStorage.getItem('produits') || '[]');
+    const stockMap = {};
+
+    produits.forEach(p => {
+      if (!stockMap[p.nom]) stockMap[p.nom] = { achats: 0, ventes: 0 };
+      if (p.type === 'achat') stockMap[p.nom].achats += p.quantite;
+      else if (p.type === 'vente') stockMap[p.nom].ventes += p.quantite;
+    });
+
+    stockTable.innerHTML = '';
+    Object.entries(stockMap).forEach(([nom, data]) => {
+      const row = stockTable.insertRow();
+      const stockActuel = data.achats - data.ventes;
+      row.innerHTML = `
+        <td>${nom}</td>
+        <td>${data.achats}</td>
+        <td>${data.ventes}</td>
+        <td class="${stockActuel <= 5 ? 'stock-faible' : ''}">${stockActuel}</td>
+      `;
+    });
+  }
+
+  function afficherStats() {
+    const produits = JSON.parse(localStorage.getItem('produits') || '[]');
+    const auj = new Date();
+    const jourStr = auj.toISOString().split('T')[0];
+    const mois = auj.getMonth();
+    const an = auj.getFullYear();
+
+    const stats = {
+      jour: { achat: 0, vente: 0 },
+      mois: { achat: 0, vente: 0 },
+      an: { achat: 0, vente: 0 }
+    };
+
+    produits.forEach(p => {
+      const d = new Date(p.date);
+      const total = p.quantite * p.prix;
+      const dateStr = d.toISOString().split('T')[0];
+      if (dateStr === jourStr) stats.jour[p.type] += total;
+      if (d.getMonth() === mois && d.getFullYear() === an) stats.mois[p.type] += total;
+      if (d.getFullYear() === an) stats.an[p.type] += total;
+    });
+
+    document.getElementById('achatJour').textContent = stats.jour.achat.toFixed(2);
+    document.getElementById('venteJour').textContent = stats.jour.vente.toFixed(2);
+    document.getElementById('benefJour').textContent = (stats.jour.vente - stats.jour.achat).toFixed(2);
+
+    document.getElementById('achatMois').textContent = stats.mois.achat.toFixed(2);
+    document.getElementById('venteMois').textContent = stats.mois.vente.toFixed(2);
+    document.getElementById('benefMois').textContent = (stats.mois.vente - stats.mois.achat).toFixed(2);
+
+    document.getElementById('achatAn').textContent = stats.an.achat.toFixed(2);
+    document.getElementById('venteAn').textContent = stats.an.vente.toFixed(2);
+    document.getElementById('benefAn').textContent = (stats.an.vente - stats.an.achat).toFixed(2);
+  }
+
+  function imprimerRecu(index) {
+    const produits = JSON.parse(localStorage.getItem('produits') || '[]');
+    const p = produits[index];
+    if (!p) return alert('Transaction non trouvée.');
+
+    const contenu = `
+      <html><head><title>Reçu</title>
+      <style>
+        body { font-family: Arial, sans-serif; padding: 20px; }
+        h2 { color: #333; }
+        p { font-size: 16px; }
+        .signature { margin-top: 40px; }
+      </style>
+      </head><body>
+        <h2>Reçu de Transaction</h2>
+        <p><strong>Date :</strong> ${new Date(p.date).toLocaleString()}</p>
+        <p><strong>Client :</strong> ${p.client}</p>
+        <p><strong>Téléphone :</strong> ${p.telephone}</p>
+        <p><strong>Adresse :</strong> ${p.adresse}</p>
+        <p><strong>Produit :</strong> ${p.nom}</p>
+        <p><strong>Quantité :</strong> ${p.quantite}</p>
+        <p><strong>Prix Unitaire :</strong> ${p.prix.toFixed(2)} CFA</p>
+        <p><strong>Type :</strong> ${p.type}</p>
+        <p><strong>Total :</strong> ${(p.quantite * p.prix).toFixed(2)} CFA</p>
+        <div class="signature">
+          <p>Signature Client : _____________________</p>
+          <p>Signature Vendeur : _____________________</p>
+        </div>
+      </body></html>
+    `;
+
+    const fenetre = window.open('', '', 'width=600,height=600');
+    fenetre.document.write(contenu);
+    fenetre.document.close();
+    fenetre.focus();
+    fenetre.print();
+  }
+
+  imprimerHistoriqueBtn.onclick = () => {
+    const produits = JSON.parse(localStorage.getItem('produits') || '[]');
+    if (produits.length === 0) return alert("Aucune transaction à imprimer.");
+
+    let contenu = `
+      <html><head><title>Historique complet</title>
+      <style>
+        body { font-family: Arial, sans-serif; padding: 20px; }
+        table { width: 100%; border-collapse: collapse; }
+        th, td { border: 1px solid #ddd; padding: 8px; text-align: center; }
+        th { background-color: #4CAF50; color: white; }
+      </style>
+      </head><body>
+        <h2>Historique complet des transactions</h2>
+        <table>
+          <thead>
+            <tr>
+              <th>Date</th><th>Client</th><th>Téléphone</th><th>Adresse</th><th>Produit</th><th>Quantité</th><th>Prix Unitaire</th><th>Type</th><th>Total</th>
+            </tr>
+          </thead>
+          <tbody>
+    `;
+
+    produits.forEach(p => {
+      contenu += `
+        <tr>
+          <td>${new Date(p.date).toLocaleString()}</td>
+          <td>${p.client}</td>
+          <td>${p.telephone}</td>
+          <td>${p.adresse}</td>
+          <td>${p.nom}</td>
+          <td>${p.quantite}</td>
+          <td>${p.prix.toFixed(2)}</td>
+          <td>${p.type}</td>
+          <td>${(p.quantite * p.prix).toFixed(2)}</td>
+        </tr>
+      `;
+    });
+
+    contenu += `
+          </tbody>
+        </table>
+      </body></html>
+    `;
+
+    const fen = window.open('', '', 'width=900,height=600');
+    fen.document.write(contenu);
+    fen.document.close();
+    fen.focus();
+    fen.print();
+  };
+
+  // Export CSV historique
+  exportCsvBtn.onclick = () => {
+    const produits = JSON.parse(localStorage.getItem('produits') || '[]');
+    if (produits.length === 0) return alert("Aucune donnée à exporter.");
+
+    const csvRows = [];
+    const headers = ['Date', 'Client', 'Téléphone', 'Adresse', 'Produit', 'Quantité', 'Prix Unitaire (CFA)', 'Type', 'Total (CFA)'];
+    csvRows.push(headers.join(';'));
+
+    produits.forEach(p => {
+      const row = [
+        new Date(p.date).toLocaleString(),
+        p.client,
+        p.telephone,
+        p.adresse,
+        p.nom,
+        p.quantite,
+        p.prix.toFixed(2),
+        p.type,
+        (p.quantite * p.prix).toFixed(2)
+      ];
+      csvRows.push(row.join(';'));
+    });
+
+    const csvString = csvRows.join('\n');
+    const blob = new Blob([csvString], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'historique_quincaillerie.csv';
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
+  // Calendrier simple des échéances crédit (à personnaliser selon besoin)
+  function afficherCalendrier() {
+    const produits = JSON.parse(localStorage.getItem('produits') || '[]');
+    // Exemple: on suppose que chaque vente avec crédit impayé a un champ échéance = date + 30j
+    // Ici on liste les ventes des 30 derniers jours (simplifié)
+
+    const ventes = produits.filter(p => p.type === 'vente');
+    const auj = new Date();
+    const trenteJoursAvant = new Date(auj.getTime() - 30*24*60*60*1000);
+
+    let contenu = `<ul style="list-style:none; padding-left:0;">`;
+    ventes.forEach(v => {
+      const dateVente = new Date(v.date);
+      if (dateVente >= trenteJoursAvant) {
+        const echeance = new Date(dateVente.getTime() + 30*24*60*60*1000);
+        contenu += `<li><strong>${v.client}</strong> - Produit: ${v.nom} - Date Vente: ${dateVente.toLocaleDateString()} - Échéance crédit: ${echeance.toLocaleDateString()}</li>`;
+      }
+    });
+    if (contenu === `<ul style="list-style:none; padding-left:0;">`) contenu += `<li>Aucune échéance récente</li>`;
+    contenu += `</ul>`;
+
+    calendrierDiv.innerHTML = contenu;
+  }
+
+  // Initial affichage
+  afficherProduits();
+  afficherStock();
+  afficherStats();
+  afficherCalendrier();
+
+</script>
+
+</body>
+</html>
